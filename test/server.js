@@ -29,18 +29,18 @@ function assets(root) {
 		// run on all scss files regardless of where they are in the path
 		.get('**/*.css')
 			.src('**/*.scss')
-			.use(sass())
-			.use(autoprefix())
-				.use(check('production' === env, csso()))
+			.use(sass)
+			.use(autoprefix)
+				// .use(check('production' === env, csso()))
 		// // scripts
 		// run only on first-level javascript files
-		.get('libraries.js')
-			.src('js/libraries/*.js')
-			.use(concat('libraries.js'))
-		.get('index.js')
-			.use(duo({ root: root, components: './.dependencies' }))
-			.use(es6())
-				.use(check('production' === env, uglify()))
+		// .get('libraries.js')/
+			// .src('js/libraries/*.js')
+			// .use(concat, 'libraries.js')
+		.get('*.js')
+			.use(duo, { root: root, components: './.dependencies' })
+			.use(es6)
+				// .use(check('production' === env, uglify()))
 
 	return srv.handler();
 
