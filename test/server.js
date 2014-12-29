@@ -66,7 +66,7 @@ function duo(opts) {
 }
 
 // Little sample application
-var source = path.join(__dirname, '/assets');
+var source = path.join(__dirname, '/fixtures');
 var cache  = path.join(source, './.cache');
 var deps   = path.join(source, './.dependencies');
 
@@ -172,6 +172,9 @@ describe('GET /path/to/asset', function() {
 	});
 	
 	it ('should recompile on changes', function(done) {
+		
+		this.timeout(3000);
+		
 		request
 			.get('/date.js')
 			.expect(200)

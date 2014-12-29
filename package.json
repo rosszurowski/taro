@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "description": "An asset pipeline for Express built on Gulp",
   "dependencies": {
+    "async": "^0.9.0",
     "debug": "^2.1.0",
     "glob": "^4.3.2",
-    "gulp": "git://github.com/gulpjs/gulp#4.0",
+    "gulp": "^3.8.10",
     "gulp-tap": "^0.1.3",
     "gulp-util": "^3.0.1",
     "lazypipe": "^0.2.2",
