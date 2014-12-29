@@ -9,7 +9,6 @@ var Server  = require('..');
 
 // asset server requires
 var map = require('map-stream');
-var check = require('gulp-if');
 var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var csso = require('gulp-csso');
@@ -26,22 +25,22 @@ function assets(root) {
 
 	var srv = new Server(root)
 		// styles
-		// run on all scss files regardless of where they are in the path
 		.get('**/*.css')
 			.src('**/*.scss')
 			.use(sass)
+		.get('*.css')
+			.src('**/*.scss')
 			.use(autoprefix)
-				// .when('production' === env, csso)
-				// .use(check('production' === env, csso()))
-		// // scripts
-		// run only on first-level javascript files
+		// scripts
 		.get('libraries.js')
 			.src('js/libraries/*.js')
 			.use(concat, 'libraries.js')
 		.get('index.js')
 			.use(duo, { root: root, components: './.dependencies' })
 			.use(es6)
-				// .use(check('production' === env, uglify()))
+		// .get('{index,date}.js')
+		.get('date.js')
+			.use(concat, 'date.js');
 
 	return srv.middleware();
 
@@ -154,7 +153,6 @@ describe('GET /path/to/asset', function() {
 			.expect('Content-Type', /javascript/)
 			.end(function(err, res) {
 				res.text.should.equal('var a = 5;\nvar b = 8;');
-				console.log(res.text);
 				done()
 			});
 	})
@@ -171,6 +169,33 @@ describe('GET /path/to/asset', function() {
 					done();
 				})
 			})
+	});
+	
+	it ('should recompile on changes', function(done) {
+		request
+			.get('/date.js')
+			.expect(200)
+			.expect('Content-Type', /javascript/)
+			.end(function(err, res) {
+				res.text.length.should.be.above(0);
+				// OS X has a 1sec file modified time resolution
+				setTimeout(second, 1000);
+			});
+			
+		function second() {
+			var date = Date.now().toString();
+			fs.writeFile(path.join(source, 'date.js'), date, function(err) {
+				if (err) return done(err);
+				request
+					.get('/date.js')
+					.expect(200)
+					.expect('Content-Type', /javascript/)
+					.end(function(err, res) {
+						res.text.should.equal(date);
+						done();
+					})
+			})
+		}
 	});
 	
 });
