@@ -12,17 +12,15 @@ var concat = require('gulp-concat');
 var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var csso = require('gulp-csso');
-var Duo = require('duo');
-var map = require('map-stream');
 var es6 = require('gulp-6to5');
 
 var env = process.env.NODE_ENV;
 
 // Asset server
 
-function assets(root) {
+function assets(opts) {
 
-	var srv = new Server({ root: root })
+	var srv = new Server(opts)
 		// styles
 		.task('**/*.css')
 			.src('**/*.scss')
@@ -30,13 +28,12 @@ function assets(root) {
 		.task('*.css')
 			.src('**/*.scss')
 			.use(autoprefix)
-				.useif('production' === env, csso);
+				.when('production' === env, csso)
 		// scripts
 		.task('libraries.js')
 			.src('js/libraries/*.js')
 			.use(concat, 'libraries.js')
 		.task('index.js')
-			.use(duo, { root: root, components: './.dependencies' })
 			.use(es6)
 		.task('date.js')
 			.use(concat, 'date.js');
@@ -45,32 +42,13 @@ function assets(root) {
 
 }
 
-
-/**
- * Prep duo for gulp streams
- * @param {Object} opts
- */
-function duo(opts) {
-	opts = opts || {};
-	var compiler = new Duo(opts.root);
-	if (opts.components) compiler.installTo(opts.components);
-	return map(function(file, done) {
-		compiler.entry(file.path)
-		.run(function(err, src) {
-			if (err) return done(err);
-			file.contents = new Buffer(src);
-			done(null, file);
-		});
-	});
-}
-
 // Little sample application
 var source = path.join(__dirname, '/fixtures');
 var cache  = path.join(source, './.cache');
 var deps   = path.join(source, './.dependencies');
 
 var app = express();
-app.use(assets(source));
+app.use(assets({ root: source, cache: cache, dependencies: deps }));
 app.use(function(err, req, res, next) {
 	var status = err.status || 500;
 	res.status(status).end();
