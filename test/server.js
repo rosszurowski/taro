@@ -1,18 +1,18 @@
-var path    = require('path');
+var fs   = require('fs');
+var path = require('path');
+
+var rimraf = require('rimraf');
 var should  = require('should');
 var express = require('express');
 var request = require('supertest');
 var Server  = require('..');
 
 // asset server requires
-var path = require('path');
 var map = require('map-stream');
 var check = require('gulp-if');
-
 var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var csso = require('gulp-csso');
-
 var Duo = require('duo');
 var concat = require('gulp-concat');
 var es6 = require('gulp-6to5');
@@ -58,7 +58,7 @@ function duo(opts) {
 	return map(function(file, done) {
 		compiler.entry(file.path)
 		.run(function(err, src) {
-			if (err) return fn(err);
+			if (err) return done(err);
 			file.contents = new Buffer(src);
 			done(null, file);
 		});
@@ -66,21 +66,34 @@ function duo(opts) {
 }
 
 // Little sample application
+var source = path.join(__dirname, '/assets');
+var cache  = path.join(source, './.cache');
+var deps   = path.join(source, './.dependencies');
+
 var app = express();
-app.use(assets(path.join(__dirname, '/assets')));
+app.use(assets(source));
 app.use(function(err, req, res, next) {
 	var status = err.status || 500;
-	console.log('error', err.message, err.stack);
+	// console.log('error', err.message, err.stack);
 	res.status(status).end();
 });
 // load it into supertest
 request = request(app);
 
+
 describe('GET /path/to/asset', function() {
 	
 	// increasing the timeout, because for things like duo, it can take over
 	// 2000ms for the initial grab
-	this.timeout(2500);
+	this.timeout(2750);
+	
+	// clear the cache
+	before(function(done) {
+		rimraf(cache, function(err) {
+			if (err) return done(err);
+			rimraf(deps, done);
+		})
+	});
 	
 	it ('should 404 for nonexistent files', function(done) {
 		request
