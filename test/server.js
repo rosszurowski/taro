@@ -8,14 +8,13 @@ var request = require('supertest');
 var Server  = require('..');
 
 // asset server requires
-var map = require('map-stream');
+var concat = require('gulp-concat');
 var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var csso = require('gulp-csso');
 var Duo = require('duo');
-var concat = require('gulp-concat');
+var map = require('map-stream');
 var es6 = require('gulp-6to5');
-var uglify = require('gulp-uglify');
 
 var env = process.env.NODE_ENV;
 
@@ -23,23 +22,23 @@ var env = process.env.NODE_ENV;
 
 function assets(root) {
 
-	var srv = new Server(root)
+	var srv = new Server({ root: root })
 		// styles
-		.get('**/*.css')
+		.task('**/*.css')
 			.src('**/*.scss')
 			.use(sass)
-		.get('*.css')
+		.task('*.css')
 			.src('**/*.scss')
 			.use(autoprefix)
+				.useif('production' === env, csso);
 		// scripts
-		.get('libraries.js')
+		.task('libraries.js')
 			.src('js/libraries/*.js')
 			.use(concat, 'libraries.js')
-		.get('index.js')
+		.task('index.js')
 			.use(duo, { root: root, components: './.dependencies' })
 			.use(es6)
-		// .get('{index,date}.js')
-		.get('date.js')
+		.task('date.js')
 			.use(concat, 'date.js');
 
 	return srv.middleware();
@@ -74,7 +73,6 @@ var app = express();
 app.use(assets(source));
 app.use(function(err, req, res, next) {
 	var status = err.status || 500;
-	// console.log('error', err.message, err.stack);
 	res.status(status).end();
 });
 // load it into supertest
