@@ -31,18 +31,19 @@ function assets(root) {
 			.src('**/*.scss')
 			.use(sass)
 			.use(autoprefix)
+				// .when('production' === env, csso)
 				// .use(check('production' === env, csso()))
 		// // scripts
 		// run only on first-level javascript files
-		// .get('libraries.js')/
-			// .src('js/libraries/*.js')
-			// .use(concat, 'libraries.js')
-		.get('*.js')
+		.get('libraries.js')
+			.src('js/libraries/*.js')
+			.use(concat, 'libraries.js')
+		.get('index.js')
 			.use(duo, { root: root, components: './.dependencies' })
 			.use(es6)
 				// .use(check('production' === env, uglify()))
 
-	return srv.handler();
+	return srv.middleware();
 
 }
 
@@ -144,6 +145,28 @@ describe('GET /path/to/asset', function() {
 			.expect(200)
 			.expect('Content-Type', /css/)
 			.end(done);
+	});
+	
+	it ('should work with concat-style tasks', function(done) {
+		request
+			.get('/libraries.js')
+			.expect(200)
+			.expect('Content-Type', /javascript/)
+			.end(done);
 	})
+	
+	it ('should cache requests', function(done) {
+		request
+			.get('/styles.css')
+			.expect(200)
+			.expect('Content-Type', /css/)
+			.end(function(err, res) {
+				should.not.exist(err);
+				fs.exists(path.join(cache, '/styles.css'), function(exists) {
+					exists.should.be.true;
+					done();
+				})
+			})
+	});
 	
 });
