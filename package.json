@@ -15,6 +15,10 @@
     "send": "^0.10.1",
     "serve-static": "^1.7.1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rosszurowski/taro"
+  },
   "keywords": [
     "asset",
     "pipeline",
