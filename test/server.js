@@ -152,7 +152,11 @@ describe('GET /path/to/asset', function() {
 			.get('/libraries.js')
 			.expect(200)
 			.expect('Content-Type', /javascript/)
-			.end(done);
+			.end(function(err, res) {
+				res.text.should.equal('var a = 5;\nvar b = 8;');
+				console.log(res.text);
+				done()
+			});
 	})
 	
 	it ('should cache requests', function(done) {
