@@ -39,7 +39,7 @@ function taro() {
 app.use('/assets/', taro());
 ```
 
-Putting the above example in its own module has the advantage of cleanly separating your app's dependencies from the swath of gulp plugins used to compile your front-end.
+You can also package Taro in a local module (by symlinking a folder with a `package.json` into `node_modules/`, which has the advantage of cleanly separating your app's dependencies from the swath of gulp plugins used to compile your front-end.
 
 ## API
 
