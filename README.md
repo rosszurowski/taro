@@ -1,4 +1,4 @@
-# Taro
+# Taro [![Circle CI](https://circleci.com/gh/rosszurowski/taro.svg?style=svg&circle-token=95b8acade8ecb29f54c72ede6969c33b8566560d)](https://circleci.com/gh/rosszurowski/taro)
 
 An extensible asset pipeline server for [Express](http://expressjs.com/), that uses [gulp](gulpjs.com) to process files. 
 
