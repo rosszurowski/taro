@@ -21,8 +21,11 @@
   },
   "keywords": [
     "asset",
-    "pipeline",
-    "express"
+    "connect",
+    "express",
+    "gulp",
+    "middleware",
+    "pipeline"
   ],
   "scripts": {
     "test": "mocha"
