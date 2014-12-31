@@ -15,7 +15,6 @@ $ npm install taro --save
 Taro offers a [superagent](https://github.com/visionmedia/superagent)-esque chainable system for describing how your files should be processed.
 
 ```javascript
-
 var express = require('express');
 var app = express();
 

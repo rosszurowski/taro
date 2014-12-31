@@ -9,6 +9,7 @@ var Server  = require('..');
 
 // asset server requires
 var concat = require('gulp-concat');
+var coffee = require('gulp-coffee');
 var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var csso = require('gulp-csso');
@@ -35,6 +36,8 @@ function assets(opts) {
 			.use(concat, 'libraries.js')
 		.task('index.js')
 			.use(es6)
+		.task('invalid.js')
+			.use(coffee)
 		.task('date.js')
 			.use(concat, 'date.js');
 
@@ -51,7 +54,7 @@ var app = express();
 app.use(assets({ root: source, cache: cache, dependencies: deps }));
 app.use(function(err, req, res, next) {
 	var status = err.status || 500;
-	res.status(status).end();
+	res.status(status).json(err);
 });
 // load it into supertest
 request = request(app);
@@ -175,6 +178,20 @@ describe('GET /path/to/asset', function() {
 					})
 			})
 		}
+	});
+	
+	it ('should pass compilation errors forward', function(done) {
+		
+		request
+			.get('/invalid.js')
+			.expect(500)
+			.end(function(err, res) {
+				should.exist(res.body);
+				should.exist(res.body.message);
+				should.exist(res.body.plugin);
+				done();
+			});
+		
 	});
 	
 });
