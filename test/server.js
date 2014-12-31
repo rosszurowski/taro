@@ -38,6 +38,7 @@ function assets(opts) {
 			.use(es6)
 		.task('invalid.js')
 			.use(coffee)
+		.task('passthrough.js')
 		.task('date.js')
 			.use(concat, 'date.js');
 
@@ -191,6 +192,18 @@ describe('GET /path/to/asset', function() {
 				should.exist(res.body.plugin);
 				done();
 			});
+		
+	});
+	
+	it ('should pass-through files without plugins', function(done) {
+		
+		request
+			.get('/passthrough.js')
+			.expect(200)
+			.end(function(err, res) {
+				res.text.should.equal('let hi = 5;');
+				done();
+			})
 		
 	});
 	
