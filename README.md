@@ -116,7 +116,7 @@ This will always use the `6to5` gulp plugin, but will only run `uglify` on produ
 
 Taro passes errors onto your Express application. So if a request 404s, it will be handled by your application's code.
 
-Handling asset compilation errors is still forth-coming.
+Asset compilation errors get passed on as a 500 error.
 
 ## Performance
 
