@@ -34,13 +34,15 @@ function assets(opts) {
 		.task('libraries.js')
 			.src('js/libraries/*.js')
 			.use(concat, 'libraries.js')
+		.task('nested.js')
+			.src('js/nested/*.js')
+			.use(concat, 'nested.js')
 		.task('index.js')
 			.use(es6)
 		.task('invalid.js')
 			.use(coffee)
 		.task('passthrough.js')
-		.task('date.js')
-			.use(concat, 'date.js');
+		.task('date.js');
 
 	return srv.middleware();
 
@@ -126,7 +128,7 @@ describe('GET /path/to/asset', function() {
 			.end(done);
 	});
 	
-	it ('should work with concat-style tasks', function(done) {
+	it ('should 200 for concat-style tasks', function(done) {
 		request
 			.get('/libraries.js')
 			.expect(200)
@@ -137,12 +139,22 @@ describe('GET /path/to/asset', function() {
 			});
 	})
 	
+	it ('should 200 for files without plugins', function(done) {
+		request
+			.get('/passthrough.js')
+			.expect(200)
+			.end(function(err, res) {
+				res.text.should.equal('let hi = 5;');
+				done();
+			});
+	});
+	
 	it ('should cache requests', function(done) {
 		request
 			.get('/styles.css')
 			.expect(200)
 			.expect('Content-Type', /css/)
-			.end(function(err, res) {
+			.end(function(err) {
 				should.not.exist(err);
 				fs.exists(path.join(cache, '/styles.css'), function(exists) {
 					exists.should.be.true;
@@ -150,6 +162,27 @@ describe('GET /path/to/asset', function() {
 				})
 			})
 	});
+	
+});
+	
+describe('GET /invalid/syntax/asset', function() {
+	
+	it ('should pass compilation errors forward', function(done) {
+		request
+			.get('/invalid.js')
+			.expect(500)
+			.end(function(err, res) {
+				should.exist(res.body);
+				should.exist(res.body.message);
+				should.exist(res.body.plugin);
+				done();
+			});
+	});
+	
+});
+	
+	
+describe('GET /changed/asset', function() {
 	
 	it ('should recompile on changes', function(done) {
 		
@@ -181,30 +214,34 @@ describe('GET /path/to/asset', function() {
 		}
 	});
 	
-	it ('should pass compilation errors forward', function(done) {
+	it ('should recompile on changes to required source files', function(done) {
+		
+		this.timeout(3000);
 		
 		request
-			.get('/invalid.js')
-			.expect(500)
-			.end(function(err, res) {
-				should.exist(res.body);
-				should.exist(res.body.message);
-				should.exist(res.body.plugin);
-				done();
-			});
-		
-	});
-	
-	it ('should pass-through files without plugins', function(done) {
-		
-		request
-			.get('/passthrough.js')
+			.get('/nested.js')
 			.expect(200)
+			.expect('Content-Type', /javascript/)
 			.end(function(err, res) {
-				res.text.should.equal('let hi = 5;');
-				done();
-			})
-		
+				res.text.length.should.be.above(0);
+				setTimeout(second, 1000);
+			});
+			
+		function second() {
+			var date = Date.now().toString();
+			fs.writeFile(path.join(source, 'js', 'nested', 'b.js'), date, function(err) {
+				if (err) return done(err);
+				request
+					.get('/nested.js')
+					.expect(200)
+					.expect('Content-Type', /javascript/)
+					.end(function(err, res) {
+						res.text.should.equal('hi;\n' + date + '\nyo;');
+						done();
+					});
+			});
+		}
 	});
+
 	
 });
