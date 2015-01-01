@@ -74,7 +74,7 @@ describe('GET /path/to/asset', function() {
 	this.timeout(2750);
 	
 	// clear the cache
-	before(function(done) {
+	beforeEach(function(done) {
 		rimraf(cache, function(err) {
 			if (err) return done(err);
 			rimraf(deps, done);
@@ -159,17 +159,37 @@ describe('GET /path/to/asset', function() {
 	});
 	
 	it ('should cache requests', function(done) {
-		request
-			.get('/styles.css')
-			.expect(200)
-			.expect('Content-Type', /css/)
-			.end(function(err) {
-				should.not.exist(err);
-				fs.exists(path.join(cache, '/styles.css'), function(exists) {
-					exists.should.be.true;
-					done();
-				})
-			})
+		var uncached, cached;
+		async.series([
+			function (next) {
+				uncached = Date.now();
+				request
+					.get('/styles.css')
+					.expect(200)
+					.expect('Content-Type', /css/)
+					.end(next);
+			},
+			function (next) {
+				uncached = Date.now() - uncached;
+				cached = Date.now();
+				request
+					.get('/styles.css')
+					.expect(200)
+					.expect('Content-Type', /css/)
+					.end(next);
+			},
+			function(next) {
+				cached = Date.now() - cached;
+				next();
+			}
+		], function(err) {
+			should.not.exist(err);
+			cached.should.be.below(uncached);
+			fs.exists(path.join(cache, '/styles.css'), function(exists) {
+				exists.should.be.true;
+				done();
+			});
+		});
 	});
 	
 });
@@ -232,7 +252,6 @@ describe('GET /changed/asset', function() {
 			.expect(200)
 			.expect('Content-Type', /javascript/)
 			.end(function(err, res) {
-				console.log(res.text);
 				res.text.length.should.be.above(0);
 				setTimeout(second, 1000);
 			});
