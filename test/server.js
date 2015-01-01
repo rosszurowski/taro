@@ -31,10 +31,10 @@ function assets(opts) {
 				.when('production' === env, csso)
 		// scripts
 		.task('libraries.js')
-			.src('js/libraries/*.js')
+			.source('js/libraries/*.js')
 			.use(concat, 'libraries.js')
 		.task('nested.js')
-			.src('js/nested/*.js')
+			.source('js/nested/*.js')
 			.use(concat, 'nested.js')
 		.task('index.js')
 			.use(es6)
@@ -215,37 +215,39 @@ describe('GET /changed/asset', function() {
 	
 	it ('should recompile on changes', function(done) {
 		
-		this.timeout(3000);
+		var date;
 		
-		request
-			.get('/date.js')
-			.expect(200)
-			.expect('Content-Type', /javascript/)
-			.end(function(err, res) {
-				res.text.length.should.be.above(0);
-				// OS X has a 1sec file modified time resolution
-				setTimeout(second, 1000);
-			});
-			
-		function second() {
-			var date = Date.now().toString();
-			fs.writeFile(path.join(source, 'date.js'), date, function(err) {
-				if (err) return done(err);
+		async.series([
+			function(next) {
+				request
+					.get('/date.js')
+					.expect(200)
+					.expect('Content-Type', /javascript/)
+					.end(function(err, res) {
+						res.text.length.should.be.above(0);
+						// OS X has a 1sec file modified time resolution
+						setTimeout(next, 1005);
+					});
+			},
+			function(next) {
+				date = Date.now().toString();
+				fs.writeFile(path.join(source, 'date.js'), date, next);
+			},
+			function(next) {
 				request
 					.get('/date.js')
 					.expect(200)
 					.expect('Content-Type', /javascript/)
 					.end(function(err, res) {
 						res.text.should.equal(date);
-						done();
+						next();
 					})
-			})
-		}
+			}
+		], done);
+
 	});
 	
 	it ('should recompile on changes to required source files', function(done) {
-		
-		this.timeout(3000);
 		
 		request
 			.get('/nested.js')

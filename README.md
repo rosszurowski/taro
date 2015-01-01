@@ -46,13 +46,15 @@ Taro can be broken down into two components: a `Server` and set of `Task`s.
 
 #### Server#get(glob)
 
-Create a new task that runs when the request matches `glob`.
+Create a new task that runs when the request matches `glob`. By default, this task loads the requested file unless overridden by `Server#source`.
 
 ```javascript
 taro.get('**/*.css') // runs task on /file.css, /another.css, and /path/to/file.css
 taro.get('*.css') // runs task on /file.css, and /another.css but *not* /path/to/file.css
 taro.get('file.css') // runs task only on /file.css
 ```
+
+Aliased as `Server#for` and `Server#task`.
 
 #### Server#alias(ext, alias)
 
@@ -76,7 +78,7 @@ app.use(taro.middleware());
 app.use('/assets', taro.middleware());
 ```
 
-#### Task#src(glob)
+#### Task#source(glob)
 
 Uses a set of source files for a given task. Use this if your source file to destination file is not a 1:1 relationship. This just calls `gulp.src` under the hood.
 
@@ -84,9 +86,11 @@ Uses a set of source files for a given task. Use this if your source file to des
 // concatenates all the js files in `js/libraries/` into a single file
 taro
 	.get('libraries.js')
-	.src('js/libraries/**/*.js')
+	.source('js/libraries/**/*.js')
 	.use(concat, 'libraries.js')
 ```
+
+Aliased as `Task#src`
 
 #### Task#use(plugin[, opts...])
 
