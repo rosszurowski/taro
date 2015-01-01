@@ -1,6 +1,7 @@
 var fs   = require('fs');
 var path = require('path');
 
+var async = require('async');
 var rimraf = require('rimraf');
 var should  = require('should');
 var express = require('express');
@@ -24,10 +25,8 @@ function assets(opts) {
 	var srv = new Server(opts)
 		// styles
 		.task('**/*.css')
-			.src('**/*.scss')
 			.use(sass)
 		.task('*.css')
-			.src('**/*.scss')
 			.use(autoprefix)
 				.when('production' === env, csso)
 		// scripts
@@ -55,6 +54,11 @@ var deps   = path.join(source, './.dependencies');
 
 var app = express();
 app.use(assets({ root: source, cache: cache, dependencies: deps }));
+app.use(function(req, res, next) {
+	var err = new Error();
+	err.status = 404;
+	return next(err);
+});
 app.use(function(err, req, res, next) {
 	var status = err.status || 500;
 	res.status(status).json(err);
@@ -99,17 +103,22 @@ describe('GET /path/to/asset', function() {
 	});
 	
 	it ('should 200 for valid files', function(done) {
-		request
-			.get('/styles.scss')
-			.expect(200)
-			.expect('Content-Type', /css/)
-			.end(function(err, res) {
+		async.parallel([
+			function(next) {
+				request
+					.get('/styles.scss')
+					.expect(200)
+					.expect('Content-Type', /css/)
+					.end(next);
+			},
+			function(next) {
 				request
 					.get('/index.js')
 					.expect(200)
 					.expect('Content-Type', /javascript/)
-					.end(done);
-			});
+					.end(next);
+			}
+		], done);
 	});
 	
 	it ('should 200 for nested files', function(done) {
@@ -169,7 +178,7 @@ describe('GET /invalid/syntax/asset', function() {
 	
 	it ('should pass compilation errors forward', function(done) {
 		request
-			.get('/invalid.js')
+			.get('/invalid.css')
 			.expect(500)
 			.end(function(err, res) {
 				should.exist(res.body);
@@ -223,6 +232,7 @@ describe('GET /changed/asset', function() {
 			.expect(200)
 			.expect('Content-Type', /javascript/)
 			.end(function(err, res) {
+				console.log(res.text);
 				res.text.length.should.be.above(0);
 				setTimeout(second, 1000);
 			});
